@@ -1,0 +1,180 @@
+#include "ros/ros.h"
+#include "std_msgs/Int32MultiArray.h"
+#include "std_msgs/String.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "math.h"
+#include "cereal_port/CerealPort.h"
+using namespace std;
+
+
+void callback_stream(basic_string<char>* msg);
+
+void cmd_callback(const std_msgs::String::ConstPtr& msg);
+
+struct coil
+{
+	int channel_1;
+	int channel_2;
+	int channel_3;
+};
+
+coil vallon_coils[3];
+int ch1_0[3]={187641,256825,119824}, ch2_0[3] = {-373733,-248828,-258963};
+
+int main(int argc, char ** argv)
+{
+	ros::init(argc, argv, "Vallon_driver");
+	ros::NodeHandle n;
+	ros::Publisher pub1 = n.advertise<std_msgs::Int32MultiArray>("Vallon_data",10);
+	ros::Subscriber sub1 = n.subscribe("vallon_commands",10,cmd_callback);
+
+	cereal::CerealPort serialXbee;
+	std_msgs::Int32MultiArray coil_msg;
+	char temp[100];
+	serialXbee.open("/dev/ttyUSB0",115200);
+
+	ros::Time start = ros::Time::now();
+	ros::Time current = ros::Time::now();
+	ofstream data_file("data_log.txt",ios::out | ios::trunc);
+	int n_bytes;
+	int measure_value[3] =  {0 , 0, 0};
+	float beta[3]={0.0,0.0,0.0}, sig[3];
+	ros::Rate loop_rate(200);
+
+	vallon_coils[0].channel_1 = 0;
+	vallon_coils[0].channel_2 = 0;
+	vallon_coils[0].channel_3 = 0;
+	vallon_coils[1].channel_1 = 0;
+	vallon_coils[1].channel_2 = 0;
+	vallon_coils[1].channel_3 = 0;
+	vallon_coils[2].channel_1 = 0;
+	vallon_coils[2].channel_2 = 0;
+	vallon_coils[2].channel_3 = 0;
+	
+	serialXbee.startReadBetweenStream(callback_stream,'$','\n');
+	while(ros::ok())
+	{
+		/*if(current.sec - start.sec > 1)
+		{
+			cout << vallon_coils[0].channel_1 << " " << vallon_coils[0].channel_2 << " " << vallon_coils[0].channel_3 << endl;
+			cout << vallon_coils[1].channel_1 << " " << vallon_coils[1].channel_2 << " " << vallon_coils[1].channel_3 << endl;
+			cout << vallon_coils[2].channel_1 << " " << vallon_coils[2].channel_2 << " " << vallon_coils[2].channel_3 << endl << endl;
+			start = ros::Time::now();
+		}*/
+
+		for(int i = 0; i <3; i++)
+		{
+			coil_msg.data.push_back(vallon_coils[i].channel_1);
+			coil_msg.data.push_back(vallon_coils[i].channel_2);
+			coil_msg.data.push_back(vallon_coils[i].channel_3);
+
+			
+			beta[i] = ((float)(vallon_coils[i].channel_2 - ch2_0[i]))/((float)(vallon_coils[i].channel_1 - ch2_0[i]));
+
+			sig[i] = beta[i]/(1-beta[i]);
+			cout << sig[i] << endl;
+
+		}
+		pub1.publish(coil_msg);
+		coil_msg.data.clear();
+		cout << endl;
+
+
+		ros::spinOnce();
+		loop_rate.sleep();
+		current = ros::Time::now();
+	}
+
+	data_file.close();
+	serialXbee.close();
+
+	return(0);
+}
+
+
+void callback_stream(basic_string<char>* msg)
+{
+	if(msg->length() != 61)
+		return;
+
+	int coil_n = (int)msg->at(7) - 48;
+
+	int signs;
+
+	//CHANNEL 1
+	if(msg->at(13) == '+')
+		signs = 1;
+	if(msg->at(13) == '-')
+		signs = -1;
+
+	string value_str = msg->substr(14,6);
+	int channel_value = 0;
+
+	for(int i = 0; i < 6 ; i++)
+	{
+		if(value_str[i] > 60 )
+		{
+			channel_value += (value_str[i] - 55)*pow(16,5-i);
+		}
+		else
+			channel_value += (value_str[i] - 48)*pow(16,5-i);
+	}
+
+	vallon_coils[coil_n -1].channel_1 = signs*channel_value;
+
+	// CHANNEL 2
+	if(msg->at(22) == '+')
+		signs = 1;
+	if(msg->at(22) == '-')
+		signs = -1;
+
+	value_str = msg->substr(23,6);
+	channel_value = 0;
+
+	for(int i = 0; i < 6 ; i++)
+	{
+		if(value_str[i] > 60 )
+		{
+			channel_value += (value_str[i] - 55)*pow(16,5-i);
+		}
+		else
+			channel_value += (value_str[i] - 48)*pow(16,5-i);
+	}
+
+	vallon_coils[coil_n -1].channel_2 = signs*channel_value;
+
+	// CHANNEL 3
+	if(msg->at(31) == '+')
+		signs = 1;
+	if(msg->at(31) == '-')
+		signs = -1;
+
+	value_str = msg->substr(32,6);
+	channel_value = 0;
+
+	for(int i = 0; i < 6 ; i++)
+	{
+		if(value_str[i] > 60 )
+		{
+			channel_value += (value_str[i] - 55)*pow(16,5-i);
+		}
+		else
+			channel_value += (value_str[i] - 48)*pow(16,5-i);
+	}
+
+	vallon_coils[coil_n -1].channel_3 = signs*channel_value;
+}
+
+void cmd_callback(const std_msgs::String::ConstPtr& msg)
+{
+	if(msg->data == "SET")
+	{
+		for(int i = 0; i<3 ; i++)
+		{
+			ch1_0[i] = vallon_coils[i].channel_1;
+			ch2_0[i] = vallon_coils[i].channel_2;
+		}
+	}
+}

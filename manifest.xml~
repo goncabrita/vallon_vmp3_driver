@@ -1,0 +1,17 @@
+<package>
+  <description brief="vallon_md">
+
+     Vallon
+
+  </description>
+  <author>Gonçalo Cabrita and Jorge Fraga</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vallon_md</url>
+  <depend package="roscpp"/>
+  <depend package="cereal_port"/>
+  <depend package="metal_detector_msgs"/>
+
+</package>
+
+

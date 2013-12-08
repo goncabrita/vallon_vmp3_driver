@@ -1,0 +1,37 @@
+<package>
+  <name>vallon_vmp3_driver</name>
+  <version>1.0.0</version>
+  <description>
+		Hardware driver for the Vallon VMP3, three-coil pulse induction metal detector.
+</description>
+  <maintainer email="goncabrita@gmail.com">Gonçalo Cabrita</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/vallon_vmp3_driver</url>
+
+  <author>Gonçalo Cabrita</author>
+  <author>Jorge Fraga</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>cereal_port</build_depend>
+  <build_depend>metal_detector_msgs</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>cereal_port</run_depend>
+  <run_depend>metal_detector_msgs</run_depend>
+
+<export>
+    <rosdoc config="rosdoc.yaml"/>
+</export>
+
+</package>
+
+
