@@ -46,8 +46,9 @@
 #include <string>
 #include "math.h"
 
-#define MIDDLE_COIL 	0
-#define LEFT_COIL 	1
+
+#define LEFT_COIL 	0
+#define MIDDLE_COIL 1
 #define RIGHT_COIL 	2
 
 struct coil
