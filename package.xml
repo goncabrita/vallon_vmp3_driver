@@ -28,10 +28,6 @@
   <run_depend>cereal_port</run_depend>
   <run_depend>metal_detector_msgs</run_depend>
 
-<export>
-    <rosdoc config="rosdoc.yaml"/>
-</export>
-
 </package>
 
 
