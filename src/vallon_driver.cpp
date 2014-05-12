@@ -142,13 +142,13 @@ void streamCallback(std::basic_string<char>* msg)
 	switch (coil_n-1)
 	{
 		case MIDDLE_COIL:
-            frame.append("/middle_coil");
+            frame = "middle_coil";
 			break;
 		case LEFT_COIL:
-            frame.append("/left_coil");
+            frame = "left_coil";
 			break;
 		case RIGHT_COIL:
-            frame.append("/right_coil");
+            frame = "right_coil";
 			break;
 	}
 
